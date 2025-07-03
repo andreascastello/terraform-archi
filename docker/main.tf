@@ -26,11 +26,17 @@ resource "docker_container" "mongo" {
   }
   env = [
     "MONGO_INITDB_ROOT_USERNAME=${var.mongo_user}",
-    "MONGO_INITDB_ROOT_PASSWORD=${var.mongo_password}"
+    "MONGO_INITDB_ROOT_PASSWORD=${var.mongo_password}",
+    "MONGO_INITDB_DATABASE=${var.mongo_database}"
   ]
   ports {
     internal = 27017
     external = 27017
+  }
+  command = ["--bind_ip_all"]
+  volumes {
+    host_path      = "${abspath(path.module)}/mongo-init"
+    container_path = "/docker-entrypoint-initdb.d"
   }
 }
 
@@ -52,6 +58,10 @@ resource "docker_container" "mysql" {
     internal = 3306
     external = 3306
   }
+  volumes {
+    host_path      = "${abspath(path.module)}/sqlfiles"
+    container_path = "/docker-entrypoint-initdb.d"
+  }
 }
 
 # Adminer
@@ -65,9 +75,32 @@ resource "docker_container" "adminer" {
     name = docker_network.app_net.name
   }
   ports {
-    internal = 8081
+    internal = 8080
     external = 8081
   }
+}
+
+# Ajout de mongo-express
+resource "docker_image" "mongo_express" {
+  name = "mongo-express:latest"
+}
+resource "docker_container" "mongo_express" {
+  name  = "mongo_express"
+  image = docker_image.mongo_express.name
+  networks_advanced {
+    name = docker_network.app_net.name
+  }
+  env = [
+    "ME_CONFIG_MONGODB_SERVER=mongo",
+    "ME_CONFIG_MONGODB_PORT=27017",
+    "ME_CONFIG_MONGODB_ADMINUSERNAME=${var.mongo_user}",
+    "ME_CONFIG_MONGODB_ADMINPASSWORD=${var.mongo_password}"
+  ]
+  ports {
+    internal = 8081
+    external = 8082
+  }
+  depends_on = [docker_container.mongo]
 }
 
 # Node.js API (MongoDB)
@@ -131,4 +164,7 @@ resource "docker_container" "react_app" {
     internal = 3000
     external = 3000
   }
-} 
+}
+
+# MongoDB init (à la fin)
+# (Supprimé car le script n'existe plus) 

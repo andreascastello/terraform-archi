@@ -1,16 +1,16 @@
 # Variables pour MongoDB
-# mongo_image        = "mongo:6"
-# mongo_user         = "admin"
-# mongo_password     = "pass"
-# mongo_database     = "expressapp"
+mongo_image        = "mongo:6"
+mongo_user         = "root"
+mongo_password     = "example"
+mongo_database     = "blog"
 
 # Variables pour MySQL
-# mysql_image        = "mysql:8"
-# mysql_root_password= "example"
-# mysql_database     = "users"
+mysql_image        = "mysql:8"
+mysql_root_password= "example"
+mysql_database     = "users"
 
 # Variable pour Adminer
-# adminer_image      = "adminer:latest"
+adminer_image      = "adminer:latest"
 
 # Images custom à renseigner (exemple)
 node_image   = "andreascastello06/express_mongodb_app_ynov:latest"
