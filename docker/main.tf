@@ -114,7 +114,7 @@ resource "docker_container" "node_api" {
     name = docker_network.app_net.name
   }
   env = [
-    "MONGO_URL=mongodb://${var.mongo_user}:${var.mongo_password}@mongo:27017/${var.mongo_database}"
+    "MONGO_URI=mongodb://${var.mongo_user}:${var.mongo_password}@mongo:27017/${var.mongo_database}?authSource=admin"
   ]
   ports {
     internal = 8080
