@@ -114,11 +114,13 @@ resource "docker_container" "node_api" {
     name = docker_network.app_net.name
   }
   env = [
-    "MONGO_URI=mongodb://${var.mongo_user}:${var.mongo_password}@mongo:27017/${var.mongo_database}?authSource=admin"
+    "MONGO_URI=mongodb://${var.mongo_user}:${var.mongo_password}@mongo:27017/${var.mongo_database}?authSource=admin",
+    "PORT=8080",
+    "JWT_SECRET=terraform_secret_key"
   ]
   ports {
     internal = 8080
-    external = 8080
+    external = 3001
   }
   depends_on = [docker_container.mongo]
 }
@@ -158,7 +160,7 @@ resource "docker_container" "react_app" {
   }
   env = [
     "VITE_API_URL=http://localhost:8000",
-    "VITE_NODE_API_URL=http://localhost:8080"
+    "VITE_NODE_API_URL=http://localhost:3001"
   ]
   ports {
     internal = 3000
