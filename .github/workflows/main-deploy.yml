@@ -51,8 +51,20 @@ jobs:
       - name: Debug Scalingo Apps
         run: scalingo --region osc-fr1 apps
 
-      - name: Wait for Scalingo propagation
-        run: sleep 30
+      - name: Wait for Scalingo apps to be ready
+        run: |
+          for app in react-frontend-enzo20240607 fastapi-mysql-api-enzo20240607 express-mongodb-api-enzo20240607; do
+            echo "Waiting for $app to be ready..."
+            for i in {1..15}; do
+              status=$(scalingo --region osc-fr1 apps | grep $app | awk '{print $3}')
+              echo "$app status: $status"
+              if [ "$status" = "stopped" ] || [ "$status" = "running" ]; then
+                echo "$app is ready!"
+                break
+              fi
+              sleep 10
+            done
+          done
 
       - name: Deploy React to Scalingo
         run: |
