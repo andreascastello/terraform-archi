@@ -10,6 +10,7 @@ terraform {
 
 provider "scalingo" {
   api_token = var.scalingo_token
+  region    = "osc-fr1"
 }
 
 # Application Node.js + MongoDB (Express API)
