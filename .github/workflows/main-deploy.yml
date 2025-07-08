@@ -1,8 +1,8 @@
-name: On Dispatch - Terraform Deploy + Scalingo
+name: Main Deploy - Terraform + Scalingo
 
 on:
-  repository_dispatch:
-    types: [deploy-terraform]
+  push:
+    branches: [main]
 
 jobs:
   terraform-deploy:
