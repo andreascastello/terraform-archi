@@ -48,6 +48,12 @@ jobs:
         run: |
           scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
+      - name: Debug Scalingo Apps
+        run: scalingo --region osc-fr1 apps
+
+      - name: Wait for Scalingo propagation
+        run: sleep 30
+
       - name: Deploy React to Scalingo
         run: |
           cd integ-deploiement
