@@ -9,19 +9,19 @@ variable "scalingo_token" {
 variable "express_app_name" {
   description = "Nom de l'application Express/MongoDB"
   type        = string
-  default     = "express-mongodb-api"
+  default     = "express-mongodb-api-enzo"
 }
 
 variable "fastapi_app_name" {
   description = "Nom de l'application FastAPI/MySQL"
   type        = string
-  default     = "fastapi-mysql-api"
+  default     = "fastapi-mysql-api-enzo"
 }
 
 variable "react_app_name" {
   description = "Nom de l'application React"
   type        = string
-  default     = "react-frontend"
+  default     = "react-frontend-enzo"
 }
 
 # URLs des repos GitHub
