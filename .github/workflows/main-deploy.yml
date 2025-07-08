@@ -55,7 +55,7 @@ jobs:
           cd integ-deploiement
           npm install
           npm run build
-          git init
+          git init --initial-branch=master
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git remote add scalingo git@ssh.osc-fr1.scalingo.com:react-frontend-enzo20240607.git
@@ -66,7 +66,7 @@ jobs:
       - name: Deploy FastAPI via Git
         run: |
           cd integ-deploiement/server
-          git init
+          git init --initial-branch=master
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git remote add scalingo git@ssh.osc-fr1.scalingo.com:fastapi-mysql-api-enzo20240607.git
@@ -78,7 +78,7 @@ jobs:
         run: |
           cd express-mongodb-app
           npm install
-          git init
+          git init --initial-branch=master
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git remote add scalingo git@ssh.osc-fr1.scalingo.com:express-mongodb-api-enzo20240607.git
