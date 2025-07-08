@@ -1,3 +1,10 @@
-/scalingo
+# Terraform state and lock files
 .terraform*
 *.tfstate*
+
+# Allow Terraform configuration files but ignore sensitive files
+/scalingo/*.tfstate*
+/scalingo/.terraform/
+/scalingo/terraform.tfvars
+/scalingo/*.auto.tfvars
+/scalingo/*.env

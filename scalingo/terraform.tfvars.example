@@ -1,0 +1,29 @@
+# Configuration Scalingo
+scalingo_token = "your_scalingo_api_token_here"
+
+# Noms des applications (optionnel, valeurs par défaut utilisées)
+# express_app_name = "express-mongodb-api"
+# fastapi_app_name = "fastapi-mysql-api"
+# react_app_name = "react-frontend"
+
+# URLs des repos GitHub (optionnel, valeurs par défaut utilisées)
+# express_github_repo = "https://github.com/andreascastello/express-mongodb-app"
+# fastapi_github_repo = "https://github.com/andreascastello/integ-deploiement"
+# react_github_repo = "https://github.com/andreascastello/integ-deploiement"
+
+# Variables d'environnement MongoDB
+mongodb_atlas_uri = "mongodb+srv://username:password@cluster.mongodb.net/blog?retryWrites=true&w=majority"
+
+# Variables d'environnement MySQL (générées automatiquement par l'addon Scalingo)
+# mysql_host = "localhost"
+# mysql_database = "users"
+# mysql_user = "root"
+# mysql_password = "auto_generated_by_scalingo"
+
+# Variables de sécurité
+jwt_secret = "your_super_secret_jwt_key_here"
+
+# Domaines personnalisés (optionnels)
+# express_domain = "api-express.yourdomain.com"
+# fastapi_domain = "api-fastapi.yourdomain.com"
+# react_domain = "app.yourdomain.com" 
