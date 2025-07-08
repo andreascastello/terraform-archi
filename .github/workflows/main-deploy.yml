@@ -33,49 +33,22 @@ jobs:
         run: |
           scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
-      - name: Deploy React to Scalingo
+      - name: Setup Git for Scalingo
         run: |
-          # Créer archive React avec tous les fichiers nécessaires
-          TEMP_DIR=$(mktemp -d)
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
 
-          # Copier tous les fichiers React
-          cp -r src/ $TEMP_DIR/
-          cp -r public/ $TEMP_DIR/
-          cp package*.json $TEMP_DIR/
-          cp vite.config.js $TEMP_DIR/
-          cp index.html $TEMP_DIR/
-          cp scalingo.json $TEMP_DIR/ 2>/dev/null || true
-          cp .gitignore $TEMP_DIR/ 2>/dev/null || true
-          cp README.md $TEMP_DIR/ 2>/dev/null || true
-
-          # Créer un package.json spécifique pour Scalingo si nécessaire
-          if [ ! -f $TEMP_DIR/package.json ]; then
-            echo '{
-              "name": "react-frontend",
-              "version": "1.0.0",
-              "scripts": {
-                "build": "vite build",
-                "preview": "vite preview --host 0.0.0.0 --port $PORT",
-                "start": "vite preview --host 0.0.0.0 --port $PORT"
-              },
-              "dependencies": {
-                "react": "^18.0.0",
-                "react-dom": "^18.0.0"
-              },
-              "devDependencies": {
-                "vite": "^4.0.0",
-                "@vitejs/plugin-react": "^3.0.0"
-              }
-            }' > $TEMP_DIR/package.json
-          fi
-
-          cd $TEMP_DIR
-          tar -czf react-app.tar.gz *
-          scalingo --app react-frontend deploy react-app.tar.gz
-
-      - name: Deploy FastAPI to Scalingo
+      - name: Deploy React to Scalingo via Git
         run: |
-          # Créer archive FastAPI
+          # Ajouter le remote Scalingo pour React
+          scalingo --app react-frontend git-setup
+
+          # Pousser vers Scalingo
+          git push scalingo main
+
+      - name: Deploy FastAPI to Scalingo via Git
+        run: |
+          # Créer un dossier temporaire pour FastAPI
           TEMP_DIR=$(mktemp -d)
           cp -r server/ $TEMP_DIR/
           cp requirements.txt $TEMP_DIR/
@@ -93,6 +66,17 @@ jobs:
             echo "cryptography==41.0.7" >> $TEMP_DIR/requirements.txt
           fi
 
+          # Créer un Procfile pour FastAPI
+          echo "web: python server.py" > $TEMP_DIR/Procfile
+
           cd $TEMP_DIR
-          tar -czf fastapi-app.tar.gz *
-          scalingo --app fastapi-mysql-api deploy fastapi-app.tar.gz
+          git init
+          git add .
+          git commit -m "Deploy FastAPI"
+
+          # Ajouter le remote Scalingo pour FastAPI
+          scalingo --app fastapi-mysql-api git-setup
+          git remote add scalingo $(scalingo --app fastapi-mysql-api git-show)
+
+          # Pousser vers Scalingo
+          git push scalingo main
