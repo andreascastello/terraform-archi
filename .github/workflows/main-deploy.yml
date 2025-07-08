@@ -3,26 +3,30 @@ name: Main Deploy - Scalingo Only
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy-scalingo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code (Terraform + Apps)
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          repository: andreascastello/integ-deploiement
+          fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          node-version: "18"
-          cache: "npm"
+          terraform_version: 1.6.6
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+      - name: Terraform Init & Apply (Scalingo)
+        working-directory: ./scalingo
+        env:
+          SCALINGO_TOKEN: ${{ secrets.SCALINGO_TOKEN }}
+        run: |
+          terraform init
+          terraform apply -auto-approve -var="scalingo_token=${{ secrets.SCALINGO_TOKEN }}"
 
       - name: Install Scalingo CLI
         run: |
@@ -33,121 +37,27 @@ jobs:
         run: |
           scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
-      - name: Deploy React to Scalingo via API
+      - name: Deploy React to Scalingo
+        working-directory: integ-deploiement
         run: |
-          # Installer les dépendances et builder l'application React
           npm install
           npm run build
-
-          # Créer un dossier temporaire pour le déploiement
-          TEMP_DIR=$(mktemp -d)
-          echo "Création du dossier temporaire: $TEMP_DIR"
-
-          # Copier les fichiers buildés d'abord
-          cp -r dist/ $TEMP_DIR/
-
-          # Aller dans le dossier temporaire
-          cd $TEMP_DIR
-
-          # Créer un package.json standard pour Node.js
-          cat > package.json << 'EOF'
-          {
-            "name": "react-frontend",
-            "version": "1.0.0",
-            "main": "server.js",
-            "scripts": {
-              "start": "node server.js"
-            },
-            "dependencies": {
-              "express": "^4.18.2"
-            },
-            "engines": {
-              "node": "18.x"
-            }
-          }
-          EOF
-
-          # Créer un serveur Express simple
-          cat > server.js << 'EOF'
-          const express = require('express');
-          const path = require('path');
-          const app = express();
-          const PORT = process.env.PORT || 3000;
-
-          // Servir les fichiers statiques
-          app.use(express.static(path.join(__dirname, 'dist')));
-
-          // Route par défaut
-          app.get('*', (req, res) => {
-            res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-          });
-
-          app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-          });
-          EOF
-
-          # Créer un Procfile pour React
-          echo "web: npm start" > Procfile
-
-          # Créer un .node-version pour spécifier la version Node.js
-          echo "18" > .node-version
-
-          echo "Contenu final du dossier:"
-          ls -la
-          echo "Contenu du package.json:"
-          cat package.json
-          echo "Contenu du server.js:"
-          cat server.js
-          echo "Contenu du Procfile:"
-          cat Procfile
-          echo "Contenu du dossier dist:"
-          ls -la dist/
-
-          # Créer un archive du code React
           tar -czf react-app.tar.gz *
-
-          echo "Archive créée:"
-          ls -la react-app.tar.gz
-
-          # Vérifier le contenu de l'archive
-          echo "Contenu de l'archive:"
-          tar -tzf react-app.tar.gz
-
-          # Déclencher un déploiement via l'API Scalingo
           scalingo --app react-frontend deploy react-app.tar.gz
 
-      - name: Deploy FastAPI to Scalingo via API
+      - name: Deploy FastAPI to Scalingo
+        working-directory: integ-deploiement/server
         run: |
-          # Créer un dossier temporaire pour FastAPI
-          TEMP_DIR=$(mktemp -d)
-          cp -r server/ $TEMP_DIR/
-          cp requirements.txt $TEMP_DIR/
-          cp server.py $TEMP_DIR/ 2>/dev/null || true
-          cp vercel.py $TEMP_DIR/ 2>/dev/null || true
-
-          # Créer un requirements.txt spécifique pour Scalingo si nécessaire
-          cd $TEMP_DIR
-          if [ ! -f requirements.txt ]; then
-            cat > requirements.txt << 'EOF'
-            fastapi==0.104.1
-            uvicorn==0.24.0
-            python-multipart==0.0.6
-            python-jose[cryptography]==3.3.0
-            passlib[bcrypt]==1.7.4
-            pymysql==1.1.0
-            cryptography==41.0.7
-            EOF
-          fi
-
-          # Créer un Procfile pour FastAPI
-          echo "web: uvicorn server:app --host 0.0.0.0 --port \$PORT" > Procfile
-
-          # Créer un runtime.txt pour spécifier la version Python
-          echo "python-3.11.0" > runtime.txt
-
-          # Créer un archive du code FastAPI
           tar -czf fastapi-app.tar.gz *
-
-          # Déclencher un déploiement via l'API Scalingo
           scalingo --app fastapi-mysql-api deploy fastapi-app.tar.gz
+
+      - name: Deploy Node.js (Express/MongoDB) to Scalingo
+        working-directory: express-mongodb-app
+        run: |
+          npm install
+          tar -czf node-app.tar.gz *
+          scalingo --app express-mongodb-api deploy node-app.tar.gz
+
+      - name: Show Scalingo Apps URLs
+        working-directory: ./scalingo
+        run: terraform output
