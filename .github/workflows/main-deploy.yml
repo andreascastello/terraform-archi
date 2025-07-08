@@ -35,8 +35,48 @@ jobs:
 
       - name: Deploy React to Scalingo via API
         run: |
+          # Créer un dossier temporaire pour React
+          TEMP_DIR=$(mktemp -d)
+          cp -r src/ $TEMP_DIR/
+          cp -r public/ $TEMP_DIR/
+          cp package.json $TEMP_DIR/
+          cp package-lock.json $TEMP_DIR/ 2>/dev/null || true
+          cp vite.config.js $TEMP_DIR/
+          cp index.html $TEMP_DIR/
+
+          # Créer un package.json spécifique pour Scalingo avec les scripts de build
+          cd $TEMP_DIR
+          cat > package.json << 'EOF'
+          {
+            "name": "react-frontend",
+            "private": true,
+            "version": "0.0.0",
+            "type": "module",
+            "scripts": {
+              "dev": "vite",
+              "build": "vite build",
+              "preview": "vite preview",
+              "start": "vite preview --host 0.0.0.0 --port $PORT"
+            },
+            "dependencies": {
+              "react": "^18.2.0",
+              "react-dom": "^18.2.0",
+              "axios": "^1.6.0"
+            },
+            "devDependencies": {
+              "@types/react": "^18.2.37",
+              "@types/react-dom": "^18.2.15",
+              "@vitejs/plugin-react": "^4.0.3",
+              "vite": "^4.4.5"
+            }
+          }
+          EOF
+
+          # Créer un Procfile pour React
+          echo "web: npm start" > Procfile
+
           # Créer un archive du code React
-          tar -czf react-app.tar.gz src/ public/ package.json vite.config.js index.html
+          tar -czf react-app.tar.gz *
 
           # Déclencher un déploiement via l'API Scalingo
           scalingo --app react-frontend deploy react-app.tar.gz
@@ -51,21 +91,26 @@ jobs:
           cp vercel.py $TEMP_DIR/ 2>/dev/null || true
 
           # Créer un requirements.txt spécifique pour Scalingo si nécessaire
-          if [ ! -f $TEMP_DIR/requirements.txt ]; then
-            echo "fastapi==0.104.1" > $TEMP_DIR/requirements.txt
-            echo "uvicorn==0.24.0" >> $TEMP_DIR/requirements.txt
-            echo "python-multipart==0.0.6" >> $TEMP_DIR/requirements.txt
-            echo "python-jose[cryptography]==3.3.0" >> $TEMP_DIR/requirements.txt
-            echo "passlib[bcrypt]==1.7.4" >> $TEMP_DIR/requirements.txt
-            echo "pymysql==1.1.0" >> $TEMP_DIR/requirements.txt
-            echo "cryptography==41.0.7" >> $TEMP_DIR/requirements.txt
+          cd $TEMP_DIR
+          if [ ! -f requirements.txt ]; then
+            cat > requirements.txt << 'EOF'
+            fastapi==0.104.1
+            uvicorn==0.24.0
+            python-multipart==0.0.6
+            python-jose[cryptography]==3.3.0
+            passlib[bcrypt]==1.7.4
+            pymysql==1.1.0
+            cryptography==41.0.7
+            EOF
           fi
 
           # Créer un Procfile pour FastAPI
-          echo "web: python server.py" > $TEMP_DIR/Procfile
+          echo "web: uvicorn server:app --host 0.0.0.0 --port \$PORT" > Procfile
+
+          # Créer un runtime.txt pour spécifier la version Python
+          echo "python-3.11.0" > runtime.txt
 
           # Créer un archive du code FastAPI
-          cd $TEMP_DIR
           tar -czf fastapi-app.tar.gz *
 
           # Déclencher un déploiement via l'API Scalingo
