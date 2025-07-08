@@ -35,13 +35,39 @@ jobs:
 
       - name: Deploy React to Scalingo
         run: |
-          # Créer archive React
+          # Créer archive React avec tous les fichiers nécessaires
           TEMP_DIR=$(mktemp -d)
+
+          # Copier tous les fichiers React
           cp -r src/ $TEMP_DIR/
           cp -r public/ $TEMP_DIR/
           cp package*.json $TEMP_DIR/
           cp vite.config.js $TEMP_DIR/
           cp index.html $TEMP_DIR/
+          cp scalingo.json $TEMP_DIR/ 2>/dev/null || true
+          cp .gitignore $TEMP_DIR/ 2>/dev/null || true
+          cp README.md $TEMP_DIR/ 2>/dev/null || true
+
+          # Créer un package.json spécifique pour Scalingo si nécessaire
+          if [ ! -f $TEMP_DIR/package.json ]; then
+            echo '{
+              "name": "react-frontend",
+              "version": "1.0.0",
+              "scripts": {
+                "build": "vite build",
+                "preview": "vite preview --host 0.0.0.0 --port $PORT",
+                "start": "vite preview --host 0.0.0.0 --port $PORT"
+              },
+              "dependencies": {
+                "react": "^18.0.0",
+                "react-dom": "^18.0.0"
+              },
+              "devDependencies": {
+                "vite": "^4.0.0",
+                "@vitejs/plugin-react": "^3.0.0"
+              }
+            }' > $TEMP_DIR/package.json
+          fi
 
           cd $TEMP_DIR
           tar -czf react-app.tar.gz *
@@ -55,6 +81,17 @@ jobs:
           cp requirements.txt $TEMP_DIR/
           cp server.py $TEMP_DIR/ 2>/dev/null || true
           cp vercel.py $TEMP_DIR/ 2>/dev/null || true
+
+          # Créer un requirements.txt spécifique pour Scalingo si nécessaire
+          if [ ! -f $TEMP_DIR/requirements.txt ]; then
+            echo "fastapi==0.104.1" > $TEMP_DIR/requirements.txt
+            echo "uvicorn==0.24.0" >> $TEMP_DIR/requirements.txt
+            echo "python-multipart==0.0.6" >> $TEMP_DIR/requirements.txt
+            echo "python-jose[cryptography]==3.3.0" >> $TEMP_DIR/requirements.txt
+            echo "passlib[bcrypt]==1.7.4" >> $TEMP_DIR/requirements.txt
+            echo "pymysql==1.1.0" >> $TEMP_DIR/requirements.txt
+            echo "cryptography==41.0.7" >> $TEMP_DIR/requirements.txt
+          fi
 
           cd $TEMP_DIR
           tar -czf fastapi-app.tar.gz *
