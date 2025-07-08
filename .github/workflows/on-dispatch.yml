@@ -1,37 +1,36 @@
-name: CI on Dispatch
+name: On Dispatch - Terraform Deploy
 
 on:
   repository_dispatch:
-    types: [trigger-ci]
+    types: [deploy-terraform]
 
 jobs:
-  terraform_env:
+  terraform-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: docker
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.12.2
-      - name: Terraform init
+          terraform_version: "1.5.0"
+
+      - name: Terraform Init
+        working-directory: ./scalingo
         run: terraform init
-      - name: Terraform validate
-        run: terraform validate
-      - name: Terraform plan
-        run: terraform plan
-      - name: Terraform apply
-        run: terraform apply --auto-approve
-      - name: Docker ps
-        run: docker ps && sleep 15
-      - name: Check all services are up
-        run: |
-          chmod +x ../script.sh
-          ../script.sh
-      - name: Docker ps
-        run: docker ps
-      - name: Terraform destroy
-        run: terraform destroy --auto-approve 
+
+      - name: Terraform Plan
+        working-directory: ./scalingo
+        run: terraform plan -var-file="terraform.tfvars"
+        env:
+          TF_VAR_scalingo_token: ${{ secrets.SCALINGO_TOKEN }}
+          TF_VAR_mongodb_atlas_uri: ${{ secrets.MONGODB_ATLAS_URI }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+
+      - name: Terraform Apply
+        working-directory: ./scalingo
+        run: terraform apply -auto-approve -var-file="terraform.tfvars"
+        env:
+          TF_VAR_scalingo_token: ${{ secrets.SCALINGO_TOKEN }}
+          TF_VAR_mongodb_atlas_uri: ${{ secrets.MONGODB_ATLAS_URI }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
