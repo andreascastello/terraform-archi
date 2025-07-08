@@ -1,8 +1,12 @@
-name: On Dispatch - Terraform Deploy
+name: On Dispatch - Terraform Deploy + Scalingo
 
 on:
   repository_dispatch:
     types: [deploy-terraform]
+  push:
+    branches: [main]
+    paths:
+      - "scalingo/**"
 
 jobs:
   terraform-deploy:
@@ -34,3 +38,59 @@ jobs:
           TF_VAR_scalingo_token: ${{ secrets.SCALINGO_TOKEN }}
           TF_VAR_mongodb_atlas_uri: ${{ secrets.MONGODB_ATLAS_URI }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+
+  deploy-scalingo:
+    needs: terraform-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: andreascastello/integ-deploiement
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Scalingo CLI
+        run: |
+          curl -sSL https://cli-dl.scalingo.io/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Login to Scalingo
+        run: |
+          echo ${{ secrets.SCALINGO_TOKEN }} | scalingo login --api-token
+
+      - name: Deploy React to Scalingo
+        run: |
+          # Créer archive React
+          TEMP_DIR=$(mktemp -d)
+          cp -r src/ $TEMP_DIR/
+          cp -r public/ $TEMP_DIR/
+          cp package*.json $TEMP_DIR/
+          cp vite.config.js $TEMP_DIR/
+          cp index.html $TEMP_DIR/
+
+          cd $TEMP_DIR
+          tar -czf react-app.tar.gz *
+          scalingo --app react-frontend deploy react-app.tar.gz
+
+      - name: Deploy FastAPI to Scalingo
+        run: |
+          # Créer archive FastAPI
+          TEMP_DIR=$(mktemp -d)
+          cp -r server/ $TEMP_DIR/
+          cp requirements.txt $TEMP_DIR/
+          cp server.py $TEMP_DIR/ 2>/dev/null || true
+          cp vercel.py $TEMP_DIR/ 2>/dev/null || true
+
+          cd $TEMP_DIR
+          tar -czf fastapi-app.tar.gz *
+          scalingo --app fastapi-mysql-api deploy fastapi-app.tar.gz
