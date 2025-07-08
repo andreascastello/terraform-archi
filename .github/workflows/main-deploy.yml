@@ -33,20 +33,15 @@ jobs:
         run: |
           scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
-      - name: Setup Git for Scalingo
+      - name: Deploy React to Scalingo via API
         run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+          # Créer un archive du code React
+          tar -czf react-app.tar.gz src/ public/ package.json vite.config.js index.html
 
-      - name: Deploy React to Scalingo via Git
-        run: |
-          # Ajouter le remote Scalingo pour React
-          scalingo --app react-frontend git-setup
+          # Déclencher un déploiement via l'API Scalingo
+          scalingo --app react-frontend deploy react-app.tar.gz
 
-          # Pousser vers Scalingo
-          git push scalingo main
-
-      - name: Deploy FastAPI to Scalingo via Git
+      - name: Deploy FastAPI to Scalingo via API
         run: |
           # Créer un dossier temporaire pour FastAPI
           TEMP_DIR=$(mktemp -d)
@@ -69,14 +64,9 @@ jobs:
           # Créer un Procfile pour FastAPI
           echo "web: python server.py" > $TEMP_DIR/Procfile
 
+          # Créer un archive du code FastAPI
           cd $TEMP_DIR
-          git init
-          git add .
-          git commit -m "Deploy FastAPI"
+          tar -czf fastapi-app.tar.gz *
 
-          # Ajouter le remote Scalingo pour FastAPI
-          scalingo --app fastapi-mysql-api git-setup
-          git remote add scalingo $(scalingo --app fastapi-mysql-api git-show)
-
-          # Pousser vers Scalingo
-          git push scalingo main
+          # Déclencher un déploiement via l'API Scalingo
+          scalingo --app fastapi-mysql-api deploy fastapi-app.tar.gz
