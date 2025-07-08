@@ -9,11 +9,17 @@ jobs:
   deploy-scalingo:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code (Terraform + Apps)
+      - name: Checkout code (Terraform)
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+
+      - name: Clone Frontend Repo
+        run: git clone https://github.com/andreascastello/integ-deploiement.git integ-deploiement
+
+      - name: Clone Backend Node Repo
+        run: git clone https://github.com/andreascastello/express-mongodb-app.git express-mongodb-app
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
