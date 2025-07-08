@@ -1,0 +1,43 @@
+name: Terraform Only
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Debug - List files
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          echo "Files in scalingo directory:"
+          ls -la scalingo/
+
+      - name: Terraform Init
+        working-directory: ./scalingo
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ./scalingo
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ./scalingo
+        run: terraform plan
+        env:
+          TF_VAR_scalingo_token: ${{ secrets.SCALINGO_TOKEN }}
+          TF_VAR_mongodb_atlas_uri: ${{ secrets.MONGODB_ATLAS_URI }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_express_app_name: "express-mongodb-api"
+          TF_VAR_fastapi_app_name: "fastapi-mysql-api"
+          TF_VAR_react_app_name: "react-frontend"
