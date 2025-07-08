@@ -43,6 +43,9 @@ jobs:
           TEMP_DIR=$(mktemp -d)
           echo "Création du dossier temporaire: $TEMP_DIR"
 
+          # Copier les fichiers buildés d'abord
+          cp -r dist/ $TEMP_DIR/
+
           # Aller dans le dossier temporaire
           cd $TEMP_DIR
 
@@ -89,9 +92,6 @@ jobs:
 
           # Créer un .node-version pour spécifier la version Node.js
           echo "18" > .node-version
-
-          # Copier les fichiers buildés à la racine
-          cp -r ../dist/ .
 
           echo "Contenu final du dossier:"
           ls -la
