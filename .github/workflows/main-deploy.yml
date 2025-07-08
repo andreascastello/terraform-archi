@@ -24,9 +24,14 @@ jobs:
         working-directory: ./scalingo
         env:
           SCALINGO_TOKEN: ${{ secrets.SCALINGO_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGODB_ATLAS_URI: ${{ secrets.MONGODB_ATLAS_URI }}
         run: |
           terraform init
-          terraform apply -auto-approve -var="scalingo_token=${{ secrets.SCALINGO_TOKEN }}"
+          terraform apply -auto-approve \
+            -var="scalingo_token=${SCALINGO_TOKEN}" \
+            -var="jwt_secret=${JWT_SECRET}" \
+            -var="mongodb_atlas_uri=${MONGODB_ATLAS_URI}"
 
       - name: Install Scalingo CLI
         run: |
