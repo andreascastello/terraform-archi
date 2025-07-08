@@ -44,24 +44,24 @@ jobs:
 
       - name: Deploy React to Scalingo
         run: |
-          cd ../integ-deploiement
+          cd integ-deploiement
           npm install
           npm run build
           tar -czf react-app.tar.gz *
-          scalingo --app react-frontend-enzo deploy react-app.tar.gz
+          scalingo --app react-frontend-enzo20240607 deploy react-app.tar.gz
 
       - name: Deploy FastAPI to Scalingo
         run: |
-          cd ../integ-deploiement/server
+          cd integ-deploiement/server
           tar -czf fastapi-app.tar.gz *
-          scalingo --app fastapi-mysql-api-enzo deploy fastapi-app.tar.gz
+          scalingo --app fastapi-mysql-api-enzo20240607 deploy fastapi-app.tar.gz
 
       - name: Deploy Node.js (Express/MongoDB) to Scalingo
         run: |
-          cd ../express-mongodb-app
+          cd express-mongodb-app
           npm install
           tar -czf node-app.tar.gz *
-          scalingo --app express-mongodb-api-enzo deploy node-app.tar.gz
+          scalingo --app express-mongodb-api-enzo20240607 deploy node-app.tar.gz
 
       - name: Show Scalingo Apps URLs
         working-directory: ./scalingo
