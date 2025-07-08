@@ -72,7 +72,7 @@ jobs:
           git remote add scalingo git@ssh.osc-fr1.scalingo.com:fastapi-mysql-api-enzo.git
           git add .
           git commit -m "deploy" || echo "Nothing to commit"
-          git push scalingo main:master --force
+          git push scalingo master --force
 
       - name: Deploy Node.js (Express/MongoDB) via Git
         run: |
