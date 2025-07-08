@@ -43,25 +43,25 @@ jobs:
           scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
       - name: Deploy React to Scalingo
-        working-directory: integ-deploiement
         run: |
+          cd ../integ-deploiement
           npm install
           npm run build
           tar -czf react-app.tar.gz *
-          scalingo --app react-frontend deploy react-app.tar.gz
+          scalingo --app react-frontend-enzo deploy react-app.tar.gz
 
       - name: Deploy FastAPI to Scalingo
-        working-directory: integ-deploiement/server
         run: |
+          cd ../integ-deploiement/server
           tar -czf fastapi-app.tar.gz *
-          scalingo --app fastapi-mysql-api deploy fastapi-app.tar.gz
+          scalingo --app fastapi-mysql-api-enzo deploy fastapi-app.tar.gz
 
       - name: Deploy Node.js (Express/MongoDB) to Scalingo
-        working-directory: express-mongodb-app
         run: |
+          cd ../express-mongodb-app
           npm install
           tar -czf node-app.tar.gz *
-          scalingo --app express-mongodb-api deploy node-app.tar.gz
+          scalingo --app express-mongodb-api-enzo deploy node-app.tar.gz
 
       - name: Show Scalingo Apps URLs
         working-directory: ./scalingo
