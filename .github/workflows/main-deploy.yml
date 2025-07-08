@@ -43,27 +43,45 @@ jobs:
           TEMP_DIR=$(mktemp -d)
           echo "Création du dossier temporaire: $TEMP_DIR"
 
-          # Copier les fichiers buildés
-          cp -r dist/ $TEMP_DIR/
-
           # Aller dans le dossier temporaire
           cd $TEMP_DIR
 
-          # Créer un package.json simple pour servir les fichiers statiques
+          # Créer un package.json standard pour Node.js
           cat > package.json << 'EOF'
           {
             "name": "react-frontend",
             "version": "1.0.0",
+            "main": "server.js",
             "scripts": {
-              "start": "npx serve -s dist -l $PORT"
+              "start": "node server.js"
             },
             "dependencies": {
-              "serve": "^14.2.0"
+              "express": "^4.18.2"
             },
             "engines": {
               "node": "18.x"
             }
           }
+          EOF
+
+          # Créer un serveur Express simple
+          cat > server.js << 'EOF'
+          const express = require('express');
+          const path = require('path');
+          const app = express();
+          const PORT = process.env.PORT || 3000;
+
+          // Servir les fichiers statiques
+          app.use(express.static(path.join(__dirname, 'dist')));
+
+          // Route par défaut
+          app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+          });
+
+          app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+          });
           EOF
 
           # Créer un Procfile pour React
@@ -72,18 +90,29 @@ jobs:
           # Créer un .node-version pour spécifier la version Node.js
           echo "18" > .node-version
 
+          # Copier les fichiers buildés à la racine
+          cp -r ../dist/ .
+
           echo "Contenu final du dossier:"
           ls -la
           echo "Contenu du package.json:"
           cat package.json
+          echo "Contenu du server.js:"
+          cat server.js
           echo "Contenu du Procfile:"
           cat Procfile
+          echo "Contenu du dossier dist:"
+          ls -la dist/
 
           # Créer un archive du code React
           tar -czf react-app.tar.gz *
 
           echo "Archive créée:"
           ls -la react-app.tar.gz
+
+          # Vérifier le contenu de l'archive
+          echo "Contenu de l'archive:"
+          tar -tzf react-app.tar.gz
 
           # Déclencher un déploiement via l'API Scalingo
           scalingo --app react-frontend deploy react-app.tar.gz
