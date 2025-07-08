@@ -31,7 +31,7 @@ jobs:
 
       - name: Login to Scalingo
         run: |
-          echo ${{ secrets.SCALINGO_TOKEN }} | scalingo login --api-token
+          scalingo login --api-token ${{ secrets.SCALINGO_TOKEN }}
 
       - name: Deploy React to Scalingo
         run: |
